@@ -1,5 +1,3 @@
-// HGS (Hokkaido Geodetic Systems) cf. WGS (World Geodetic System)
-
 //座標系のリスト作成
 const selectSystemElement = document.getElementById("selectCoordinateSystem");
 Object.keys(hgsSet).forEach(key => {
@@ -11,14 +9,16 @@ Object.keys(hgsSet).forEach(key => {
 
 //初期表示
 let map, marker;
+let inputLatLng, latLngArray;
 createMap(coordinateSystem);
 createFormatJochome(coordinateSystem);
 updateJochome();
+setSystemFromURL();
 
 //座標系の更新
 selectSystemElement.addEventListener("change", function() {
     //変数の更新
-    coordinateSystem = selectSystemElement.value;
+    updateURL();
     originLat = radians(hgsSet[coordinateSystem].origin[0]);
     originLat1 = atan(sub(1, e2).mul(tan(originLat)))
     originLng = radians(hgsSet[coordinateSystem].origin[1]);
@@ -35,7 +35,46 @@ selectSystemElement.addEventListener("change", function() {
 // 緯度と経度の入力フィールドにイベントリスナーを追加
 document.getElementById("latLng").addEventListener("change", updateMarkerPosition);
 document.getElementById("latLng").addEventListener("change", updateJochome);
+document.getElementById("latLng").addEventListener("change", updateURL);
 document.getElementById("jochome").addEventListener("change", updateLatLngByJochome);
+
+//urlクエリパラメータを代入
+function setInputFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const lat = urlParams.get('lat');
+    const lng = urlParams.get('lng');
+    if (lat && lng) {
+        latLngArray = [lat, lng]
+        document.getElementById('latLng').value = `${lat}, ${lng}`;
+        document.getElementById("latLng").dispatchEvent(new Event("change"));
+    }
+};
+
+function setSystemFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    coordinateSystem = urlParams.get('coordinateSystem')
+    if (coordinateSystem) {
+        selectSystemElement.value = coordinateSystem
+    };
+};
+
+// inputLatLngの値が変わるたびにURLのクエリパラメータを更新
+function updateURL() {
+    updateLatLng()
+    const lat = latLngArray[0];
+    const lng = latLngArray[1];
+    const newUrl = new URL(window.location.href);
+    coordinateSystem = selectSystemElement.value
+    newUrl.searchParams.set('coordinateSystem', coordinateSystem);
+    if (lat && lng) {
+        newUrl.searchParams.set('lat', lat);
+        newUrl.searchParams.set('lng', lng);
+    } else {
+        newUrl.searchParams.delete('lat');
+        newUrl.searchParams.delete('lng');
+    }
+    history.pushState(null, '', newUrl);
+}
 
 //条丁目の形式を表示
 function createFormatJochome(selectedSystem) {
@@ -168,8 +207,7 @@ function updateJochome() {
 };
 
 function getJochome() {
-    const input = document.getElementById("latLng").value;
-    const latLngArray = input.split(",").map(item => parseFloat(item.trim()));
+    updateLatLng()
     const hgsCoordinates = wgs2hgs(latLngArray[0], latLngArray[1]); //see conv.js
     const blockPosition = getBlockPosition(hgsCoordinates);
     let jo, chome, eastWest, northSouth;
@@ -210,9 +248,7 @@ function getJochome() {
     return format;
 };
 function updateMarkerPosition() {
-    const input = document.getElementById("latLng").value;
-    const latLngArray = input.split(",").map(item => parseFloat(item.trim()));
-
+    updateLatLng()
     const newLat = parseFloat(latLngArray[0]);
     const newLng = parseFloat(latLngArray[1]);
 
@@ -252,3 +288,9 @@ function selectOptionByText(id, text) {
       option.selected = true; // 該当の<option>を選択状態に
     };
 };
+function updateLatLng() {
+    inputLatLng = document.getElementById("latLng").value;
+    latLngArray = inputLatLng.split(",").map(item => parseFloat(item.trim()))
+};
+
+setInputFromURL();

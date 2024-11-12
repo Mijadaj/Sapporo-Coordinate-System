@@ -8,24 +8,10 @@ body {
     padding: 0;
     font-size: medium;
 }
-.headerLink {
-    text-decoration: none;
-    color: inherit;
-}
-header {
-    display: flex;
-    flex-direction: row;
-}
+
 header img {
-    height: 100px;
-}
-header p {
-    display: flex;
-    margin-left: 30px;
-    align-items: center;
-}
-h1 {
-    font-size: 40px;
+    width: 800px;
+    max-width: 100%;
 }
 ul {
     padding-left: 20px;
@@ -44,7 +30,7 @@ li {
 .left {
     width: 50%;
     aspect-ratio: 4 / 3;
-    max-width: 600px;
+    max-width: 800px;
 }
 .right {
     width: 50%;
@@ -67,17 +53,32 @@ li {
 
 }
 
-.head, .head * {
-    font-size: 14px;
+/* すべてのブラウザで一貫したスタイルにするために基本リセット */
+button, select {
     height: 30px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: white;
+    color: black;
+    padding: 0 10px;
+    border-width: thin;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+select {
+    padding-right: 30px;
+}
+button:hover, select:hover {
+    background-color: white;
+}
+  
+button:focus, select:focus {
+    outline: none;
+    box-shadow: 0 0 3px #eee;
 }
 
-button {
-    padding: 0 5px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-}
 table {
     height: min-content;
     border-collapse: collapse;
@@ -91,6 +92,7 @@ th, td {
     padding: 8px 4px;
 }
 th {
+    min-width: 80px;
     background: #ddd;
 }
 .jochome, .jochome * {

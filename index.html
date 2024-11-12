@@ -2,9 +2,12 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="twitter:card" content="札幌の住所表記「北X条東Y丁目」を全球的に拡張．">
-    <meta name="twitter:title" content="大札幌座標系">
-    <meta name="twitter:image" content="https://mijadaj.github.io/Sapporo-Coordinate-System/images/hokkaido.webp">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="dajdarabotci">
+    <meta property="og:title" content="大札幌座標系">
+    <meta property="og:description" content="札幌の住所表記「北X条東Y丁目」を全球的に拡張．">
+    <meta property="og:image" content="https://mijadaj.github.io/Sapporo-Coordinate-System/images/hokkaido.webp">
+    <meta property="og:url" content="https://mijadaj.github.io/Sapporo-Coordinate-System/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>大札幌座標系</title>
     <link rel="icon" href="./images/hokkaido.webp"/>
@@ -15,15 +18,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.0/decimal.js" integrity="sha512-lzGbD6l9+RZmoajvULoLUeWCIM920sQca6A9rlevEVPtFJgja67/JjKob+REWn2t4B8xdKMvmuA/CSab2K8LKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
-    <a href="./index.html" class="headerLink">
-        <header>
-            <img src="./images/hokkaido.webp" alt="An image of Hokkaido" />
-            <h1>大札幌座標系</h1>
-            <p>札幌の住所表記「北X条東Y丁目」を全球的に拡張．</p>
-        </header>
-    </a>
+    <header>
+        <a href="./" class="headerLink"><img src="./images/header.webp" alt="大札幌座標系" /></a>
+    </header>
     <select class="head" id="selectCoordinateSystem">
-        <option id="initialOption">--座標系を変更--</option>
+        <option id="initialOption" value="">--座標系を変更--</option>
     </select>
     <button class="head" onclick="window.open('./conv.html')">計算式</button>
     <p>大通を赤道、創成川（南6条～北11条間, 真北に対して西に10.6度の傾き）を本初子午線とする座標系をもとに地球上のあらゆる地点を札幌の住所表示に変換します。</p>
@@ -34,7 +33,7 @@
                 <caption>座標変換</caption>
                 <tr>
                     <th>緯度, 経度（10進法）</th>
-                    <td><input type="text" id="latLng"></td>
+                    <td><input type="text" id="latLng" placeholder="緯度, 経度"></td>
                 </tr>
             </tr>
             <th>条丁目</th>
