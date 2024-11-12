@@ -1,1 +1,1 @@
-# Sapporo-Coordinate-System
+# Sapporo Coordinate System

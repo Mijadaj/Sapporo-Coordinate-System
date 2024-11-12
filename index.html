@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="大札幌座標系">
+    <meta name="twitter:image" content="画像のURL">
+    <title>大札幌座標系</title>
+    <link rel="icon" href="./images/hokkaido.webp"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.4.0/decimal.js" integrity="sha512-lzGbD6l9+RZmoajvULoLUeWCIM920sQca6A9rlevEVPtFJgja67/JjKob+REWn2t4B8xdKMvmuA/CSab2K8LKw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <a href="./index.html" class="headerLink">
+        <header>
+            <img src="./images/hokkaido.webp" alt="An image of Hokkaido" />
+            <h1>大札幌座標系</h1>
+            <p>札幌の住所表記「北X条東Y丁目」を全球的に拡張．</p>
+        </header>
+    </a>
+    <select class="head" id="selectCoordinateSystem">
+        <option id="initialOption">--座標系を変更--</option>
+    </select>
+    <button class="head" onclick="window.open('./conv.html')">計算式</button>
+    <p>大通を赤道、創成川（南6条～北11条間, 真北に対して西に10.6度の傾き）を本初子午線とする座標系をもとに地球上のあらゆる地点を札幌の住所表示に変換します。</p>
+    <div class="container">
+        <div class="left" id="map"></div>
+        <div class="right">
+            <table id="converter">
+                <caption>座標変換</caption>
+                <tr>
+                    <th>緯度, 経度（10進法）</th>
+                    <td><input type="text" id="latLng"></td>
+                </tr>
+            </tr>
+            <th>条丁目</th>
+            <td>
+                <div id="jochome">
+                    <select class="jochome" id="selectJo"></select>
+                    <input type="text" class="jochome" id="joNumber"><span id="jo">条</span>
+                    <select class="jochome" id="selectChome"></select>
+                    <input type="text" class="jochome" id="chomeNumber"><span>丁目</span>
+                </div>
+            </td>
+            <tr>
+            </table>
+            <ul id="description">
+                <li>地図上のピンを動かすとその位置の経緯度、および選択した座標系における条丁目が表示されます。ピン、経緯度、条丁目は連動しています。</li>
+                <li>赤い点は選択した座標系の原点です。</li>
+                <li>ピンの初期位置は各座標系のもととなった自治体の姉妹都市に設定してあります。</li>
+                <li>この座標変換における条丁目は楕円体座標に基づいています。平面直角座標ではありません。したがって南北方向の条（丁目）の数が大きくなるほど、東西方向の丁目（条）の間隔は狭くなります。札幌座標系の場合、北76919条（アイルランド沖 南西約1300kmの海域）付近ですべての丁目が1点に集まります。</li>
+            </ul>
+        </div>
+    </div>
+    <figure>
+        <img id="originImage" src="./images/originSapporo.webp" alt="札幌原点とテレビ塔"/>
+        <figcaption>我らが大札幌原点とテレビ塔（2024年11月6日撮影）</figcaption>
+    </figure>
+    <footer>© 2024
+        <a href="https://github.com/Mijadaj" target="_blank">Міја</a>;
+        <a href="https://github.com/Mijadaj/Sapporo-Coordinate-System" target="_blank">GitHub</a>
+    </footer>
+    <script src="./js/conv.js"></script>
+    <script src="./js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+* :not(mjx-container *) {
+    font-size: 16px;
+    font-family: 'Noto Sans JP', Arial, sans-serif;
+}
+body {
+    height: 100%;
+    margin: 20px;
+    padding: 0;
+    font-size: medium;
+}
+.headerLink {
+    text-decoration: none;
+    color: inherit;
+}
+header {
+    display: flex;
+    flex-direction: row;
+}
+header img {
+    height: 100px;
+}
+header p {
+    display: flex;
+    margin-left: 30px;
+    align-items: center;
+}
+h1 {
+    font-size: 40px;
+}
+ul {
+    padding-left: 20px;
+}
+li {
+    line-height: 150%;
+    padding-right: 10px;
+    margin-bottom: 10px;
+}
+.container {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.left {
+    width: 50%;
+    aspect-ratio: 4 / 3;
+    max-width: 600px;
+}
+.right {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+#converter, #description {
+    width: 100%;
+}
+
+@media (max-width: 1000px) {
+    .container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .left, .right {
+        width: 100%;
+    }
+
+}
+
+.head, .head * {
+    font-size: 14px;
+    height: 30px;
+}
+
+button {
+    padding: 0 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+table {
+    height: min-content;
+    border-collapse: collapse;
+    border: 1.5px solid  #999;
+    text-align: left;
+}
+th, td {
+    height: fit-content;
+    font-weight: normal;
+    border: 1px solid #999;
+    padding: 8px 4px;
+}
+th {
+    background: #ddd;
+}
+.jochome, .jochome * {
+    font-size: 14px;
+    width: auto;
+    height: 20px;
+    box-sizing:border-box;
+}
+input.jochome {
+    width: 100px;
+}
+caption {
+    caption-side: top;
+    text-align: left;
+    padding: 6px 0;
+    font-weight: bold;
+}
+#latLng {
+    font-size: 14px;
+    width: 300px;
+}
+
+#originImage {
+    height: 400px;
+    max-height: 100%;
+    aspect-ratio: 3 / 4;
+}
