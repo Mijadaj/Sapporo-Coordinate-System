@@ -63,7 +63,6 @@ function updateURL() {
     updateLatLng()
     const lat = latLngArray[0];
     const lng = latLngArray[1];
-    alert(latLngArray)
     const newUrl = new URL(window.location.href);
     coordinateSystem = selectSystemElement.value
     newUrl.searchParams.set('coordinateSystem', coordinateSystem);
