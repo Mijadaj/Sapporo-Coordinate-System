@@ -18,7 +18,7 @@ setSystemFromURL();
 //座標系の更新
 selectSystemElement.addEventListener("change", function() {
     //変数の更新
-    updateURL();
+    coordinateSystem = selectSystemElement.value
     originLat = radians(hgsSet[coordinateSystem].origin[0]);
     originLat1 = atan(sub(1, e2).mul(tan(originLat)))
     originLng = radians(hgsSet[coordinateSystem].origin[1]);
@@ -30,6 +30,7 @@ selectSystemElement.addEventListener("change", function() {
     if (optionToRemove) {
         optionToRemove.remove()
     };
+    updateURL();
 });
 
 // 緯度と経度の入力フィールドにイベントリスナーを追加
@@ -58,11 +59,11 @@ function setSystemFromURL() {
     };
 };
 
-// inputLatLngの値が変わるたびにURLのクエリパラメータを更新
 function updateURL() {
     updateLatLng()
     const lat = latLngArray[0];
     const lng = latLngArray[1];
+    alert(latLngArray)
     const newUrl = new URL(window.location.href);
     coordinateSystem = selectSystemElement.value
     newUrl.searchParams.set('coordinateSystem', coordinateSystem);
