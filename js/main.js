@@ -1,3 +1,5 @@
+const inputLatLngElement = document.getElementById("latLng");
+const divJochomeElement = document.getElementById("jochome");
 //座標系のリスト作成
 const selectSystemElement = document.getElementById("selectCoordinateSystem");
 Object.keys(hgsSet).forEach(key => {
@@ -8,64 +10,135 @@ Object.keys(hgsSet).forEach(key => {
 });
 
 //初期表示
-let map, marker;
-let inputLatLng, latLngArray;
+let map, marker, redMarker;
+let origin, zoom;
 createMap(coordinateSystem);
 createFormatJochome(coordinateSystem);
 updateJochome();
-setSystemFromURL();
+
+//イベントリスナー
+selectSystemElement.addEventListener("change", () => {
+    updateCoordinateSystem();
+    createMap(coordinateSystem);
+    updateJochome();
+});
+inputLatLngElement.addEventListener("change", () => {
+    updateMarkerPosition();
+    updateJochome();
+    updateURL();
+});
+divJochomeElement.addEventListener("change", () => {
+    updateLatLngByJochome();
+    updateMarkerPosition();
+    updateURL();
+});
+
+//地図表示関数
+function createMap(selectedSystem) {
+    if (!map) {
+        origin = hgsSet[selectedSystem].origin;
+        const twintown = hgsSet[selectedSystem].twintown;
+        map = L.map("map", {
+            minZoom: 2,
+            maxZoom: 18,
+            maxBounds: [
+                [-90, -200],
+                [90, 200]
+            ],
+        });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+        // 原点を赤丸で表示
+        redMarker = L.circleMarker(origin, {
+            color: "red",
+            fillColor: "red",
+            fillOpacity: 1,
+            radius: 5
+        }).addTo(map);
+        // マーカーの初期位置を姉妹都市に
+        marker = L.marker(twintown, { draggable: true }).addTo(map);
+        // 初期位置を<input>フィールドに表示
+        document.getElementById("latLng").value = twintown.join(", ");
+        map.fitBounds([origin, twintown]);
+        setParamsFromURL();
+        marker.on("dragend", function(e) {
+            const newLatLng = e.target.getLatLng();
+            //マーカーの位置を制限
+            const lat = Math.max(Math.min(newLatLng.lat, 90), -90);
+            const lng = Math.max(Math.min(newLatLng.lng, 180), -180);
+            //経緯度を更新
+            inputLatLngElement.value = `${lat}, ${lng}`;
+            marker.setLatLng([lat, lng])
+            map.setView([lat, lng]);
+            updateJochome();
+            updateURL();
+        });
+        map.on("zoomend", updateURL)
+    } else {
+        redMarker.setLatLng(origin);
+        marker.setLatLng(latLng);
+        map.setView(latLng);
+        map.setZoom(zoom);
+    }
+};
 
 //座標系の更新
-selectSystemElement.addEventListener("change", function() {
+function updateCoordinateSystem() {
     //変数の更新
     coordinateSystem = selectSystemElement.value
-    originLat = radians(hgsSet[coordinateSystem].origin[0]);
+    origin = hgsSet[coordinateSystem].origin
+    originLat = radians(origin[0]);
     originLat1 = atan(sub(1, e2).mul(tan(originLat)))
-    originLng = radians(hgsSet[coordinateSystem].origin[1]);
+    originLng = radians(origin[1]);
     dec = radians(hgsSet[coordinateSystem].declination)
+    zoom = map.getZoom()
     //表示更新
+    map.remove();
+    map = null;
     createMap(coordinateSystem);
     createFormatJochome(coordinateSystem);
     const optionToRemove = document.getElementById("initialOption")
     if (optionToRemove) {
         optionToRemove.remove()
     };
-    updateURL();
-});
-
-// 緯度と経度の入力フィールドにイベントリスナーを追加
-document.getElementById("latLng").addEventListener("change", updateMarkerPosition);
-document.getElementById("latLng").addEventListener("change", updateJochome);
-document.getElementById("latLng").addEventListener("change", updateURL);
-document.getElementById("jochome").addEventListener("change", updateLatLngByJochome);
-
+};
 //urlクエリパラメータを代入
-function setInputFromURL() {
+function setParamsFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const lat = urlParams.get('lat');
     const lng = urlParams.get('lng');
-    if (lat && lng) {
-        latLngArray = [lat, lng]
-        document.getElementById('latLng').value = `${lat}, ${lng}`;
-        document.getElementById("latLng").dispatchEvent(new Event("change"));
-    }
-};
-
-function setSystemFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    coordinateSystem = urlParams.get('coordinateSystem')
-    if (coordinateSystem) {
-        selectSystemElement.value = coordinateSystem
+    const z = urlParams.get('z');
+    const sys = urlParams.get('sys');
+    const sys2 = urlParams.get('coordinateSystem');
+    if (!(lat || lng || z))
+        return;
+    if (!sys || !sys2)
+        return;
+    latLng = [lat, lng];
+    zoom = z;
+    marker.setLatLng(latLng);
+    map.setView(latLng, zoom ? zoom : 6);
+    document.getElementById('latLng').value = `${lat}, ${lng}`;
+    if (sys) {
+        selectSystemElement.value = sys
+        updateCoordinateSystem();
+    } else if (sys2) {
+        selectSystemElement.value = sys2
+        updateCoordinateSystem();
     };
 };
 
 function updateURL() {
     updateLatLng()
-    const lat = latLngArray[0];
-    const lng = latLngArray[1];
     const newUrl = new URL(window.location.href);
-    coordinateSystem = selectSystemElement.value
-    newUrl.searchParams.set('coordinateSystem', coordinateSystem);
+    const lat = latLng[0];
+    const lng = latLng[1];
+    const zoom = map.getZoom();
+    const currentSystem = selectSystemElement.value
+    if (currentSystem) {
+        newUrl.searchParams.set('sys', currentSystem);
+    }
     if (lat && lng) {
         newUrl.searchParams.set('lat', lat);
         newUrl.searchParams.set('lng', lng);
@@ -73,8 +146,11 @@ function updateURL() {
         newUrl.searchParams.delete('lat');
         newUrl.searchParams.delete('lng');
     }
+    if (zoom) {
+        newUrl.searchParams.set('z', zoom)
+    }
     history.pushState(null, '', newUrl);
-}
+};
 
 //条丁目の形式を表示
 function createFormatJochome(selectedSystem) {
@@ -108,53 +184,6 @@ function deleteOptionJochome() {
     });
 };
 
-//地図表示関数
-function createMap(selectedSystem) {
-    if (map) {
-        map.remove();
-    };
-    const origin = hgsSet[selectedSystem].origin;
-    const twintown = hgsSet[selectedSystem].twintown;
-    map = L.map("map", {
-        center: origin,
-        zoom: 13,
-        maxBounds: [
-            [-90, -200],
-            [90, 200]
-        ],
-    });
-    const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a>',
-    });
-    tileLayer.addTo(map);
-
-    // 原点を赤丸で表示
-    L.circleMarker(origin, {
-        color: "red",
-        fillColor: "red",
-        fillOpacity: 1,
-        radius: 5
-    }).addTo(map);
-    // マーカーの初期位置を姉妹都市に
-    marker = L.marker(twintown, { draggable: true }).addTo(map);
-    // 初期位置を<input>フィールドに表示
-    document.getElementById("latLng").value = twintown.join(", ");
-    // マーカーをドラッグして緯度経度を更新する
-    marker.on("dragend", function(e) {
-        const newLatLng = e.target.getLatLng();
-        //マーカーの位置を制限
-        const lat = Math.max(Math.min(newLatLng.lat, 90), -90);
-        const lng = Math.max(Math.min(newLatLng.lng, 180), -180);
-        
-        const newCoordinate = [lat, lng]
-        const evt = new Event("change");
-        document.getElementById("latLng").value = newCoordinate.join(", ");
-        document.getElementById("latLng").dispatchEvent(evt);
-    });
-    map.fitBounds([origin, twintown]);
-};
-
-
 function updateLatLngByJochome() {
     const selectedText = (id) => {
         const selectElement = document.getElementById(id);
@@ -168,50 +197,48 @@ function updateLatLngByJochome() {
         "南": -1,
         "大通": 0
     };
-    format[0] = selectedText("selectJo");
-    format[1] = document.getElementById("joNumber").value
-    format[2] = selectedText("selectChome");
-    format[3] = document.getElementById("chomeNumber").value
-    if (hgsSet[coordinateSystem].jo == "longitude") {
-        blockPosition[1] = dirSign[format[0]]*format[1];
-        blockPosition[0] = dirSign[format[2]]*format[3];
+    jochome[0] = selectedText("selectJo");
+    jochome[1] = document.getElementById("joNumber").value
+    jochome[2] = selectedText("selectChome");
+    jochome[3] = document.getElementById("chomeNumber").value
+    if (hgsSet[coordinateSystem].joOffset[0] == "longitudinal") {
+        blockPosition[1] = dirSign[jochome[0]]*jochome[1];
+        blockPosition[0] = dirSign[jochome[2]]*jochome[3];
     }
     else {
-        blockPosition[0] = dirSign[format[0]]*format[1];
-        blockPosition[1] = dirSign[format[2]]*format[3];
+        blockPosition[0] = dirSign[jochome[0]]*jochome[1];
+        blockPosition[1] = dirSign[jochome[2]]*jochome[3];
     }
-    const latLngHGS = getLatLng(blockPosition);
-    const latLng = hgs2wgs(latLngHGS[0], latLngHGS[1])
-    const evt = new Event("change")
+    const latLngHGS = blockPosition2hgs(blockPosition);
+    latLng = hgs2wgs(latLngHGS)
     document.getElementById("latLng").value = latLng;
-    document.getElementById("latLng").dispatchEvent(evt);
 };
 
 function updateJochome() {
-    const format = getJochome();
+    jochome = getJochome();
     const elementJoNumber = document.getElementById("joNumber");
     const elementChomeNumber = document.getElementById("chomeNumber");
-    if (format[0] === "大通") {
+    if (jochome[0] == "大通") {
         switchAppearanceJo("odori");
-        selectOptionByText("selectJo", format[0]);
-        selectOptionByText("selectChome", format[2]);
-        elementChomeNumber.value = format[3];
+        selectOptionByText("selectJo", jochome[0]);
+        selectOptionByText("selectChome", jochome[2]);
+        elementChomeNumber.value = jochome[3];
     }
     else {
         switchAppearanceJo("directional");
-        selectOptionByText("selectJo", format[0]);
-        elementJoNumber.value = format[1];
-        selectOptionByText("selectChome", format[2]);
-        elementChomeNumber.value = format[3];
+        selectOptionByText("selectJo", jochome[0]);
+        elementJoNumber.value = jochome[1];
+        selectOptionByText("selectChome", jochome[2]);
+        elementChomeNumber.value = jochome[3];
     }
 };
 
 function getJochome() {
     updateLatLng()
-    const hgsCoordinates = wgs2hgs(latLngArray[0], latLngArray[1]); //see conv.js
-    const blockPosition = getBlockPosition(hgsCoordinates);
+    const hgsCoordinates = wgs2hgs(latLng); //see conv.js
+    const blockPosition = hgs2blockPosition(hgsCoordinates);
     let jo, chome, eastWest, northSouth;
-    if (hgsSet[coordinateSystem].jo === "longitudinal") {
+    if (hgsSet[coordinateSystem].joOffset[0] == "longitudinal") {
         jo = blockPosition[1];
         chome = blockPosition[0];
         northSouth = chome > 0 ? "北" : "南";
@@ -226,7 +253,7 @@ function getJochome() {
                 eastWest = "大通"
                 break
         };
-        format = [eastWest, Math.abs(jo), northSouth, Math.abs(chome)];
+        jochome = [eastWest, Math.abs(jo), northSouth, Math.abs(chome)];
     }
     else {
         jo = blockPosition[0];
@@ -243,17 +270,16 @@ function getJochome() {
                 northSouth = "大通"
                 break
         };
-        format = [northSouth, Math.abs(jo), eastWest, Math.abs(chome)];
+        jochome = [northSouth, Math.abs(jo), eastWest, Math.abs(chome)];
     };
-    return format;
+    return jochome;
 };
 function updateMarkerPosition() {
     updateLatLng()
-    const newLat = parseFloat(latLngArray[0]);
-    const newLng = parseFloat(latLngArray[1]);
+    const newLat = parseFloat(latLng[0]);
+    const newLng = parseFloat(latLng[1]);
 
     if (!isNaN(newLat) && !isNaN(newLng)) {
-        // マーカーがすでに存在する場合のみ更新
         if (marker) {
             marker.setLatLng([newLat, newLng]);
             map.setView([newLat, newLng]);  // 地図の表示位置も合わせて移動
@@ -289,8 +315,6 @@ function selectOptionByText(id, text) {
     };
 };
 function updateLatLng() {
-    inputLatLng = document.getElementById("latLng").value;
-    latLngArray = inputLatLng.split(",").map(item => parseFloat(item.trim()))
+    const inputLatLng = document.getElementById("latLng").value;
+    latLng = inputLatLng.split(",").map(item => parseFloat(item.trim()))
 };
-
-setInputFromURL();

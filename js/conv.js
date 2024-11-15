@@ -2,7 +2,7 @@ const hgsSet = {
     Sapporo: {
         name: "大札幌 座標系",
         format: [["北", "南", "大通"], ["東", "西"]],
-        jo: "latitudinal",
+        joOffset: ["latitudinal", 175, 110],
         origin: [43.061138, 141.357079],
         declination: 10.5842138889,
         blockSizeLatLng: [0.001170046801872075, 0.0011661354271942782],
@@ -11,7 +11,7 @@ const hgsSet = {
     Obihiro: {
         name: "帯広 座標系",
         format: [["西", "東", "大通"], ["南", "北"]],
-        jo: "longitudinal",
+        joOffset: ["longitudinal", 69, 69],
         origin: [42.932044, 143.204010],
         declination: 5.59292777778,
         blockSizeLatLng: [0.001170168504264614, 0.0011660447761194029],
@@ -20,7 +20,7 @@ const hgsSet = {
     Nayoro: {
         name: "名寄 座標系",
         format: [["西", "東", "大通"], ["南", "北"]],
-        jo: "longitudinal",
+        joOffset: ["longitudinal", 74, 74],
         origin: [44.356392, 142.463787],
         declination: 0.0992,
         blockSizeLatLng: [0.001169909916936396, 0.0011659012740710033],
@@ -29,7 +29,7 @@ const hgsSet = {
     Nakashibetsu: {
         name: "中標津 座標系",
         format: [["東", "西", "大通"], ["南", "北"]],
-        jo: "longitudinal",
+        joOffset: ["longitudinal", 45.5, 45.5],
         origin: [43.548025, 144.973040],
         declination: 42.1626611111,
         blockSizeLatLng: [0.0008177655011993894, 0.0008174683912222061],
@@ -48,8 +48,6 @@ const hgsSet = {
     Shibetsu: {},
     */
 };
-let format, blockPosition;
-let coordinateSystem = "Sapporo";
 
 Decimal.set({
     precision: 30,
@@ -75,24 +73,29 @@ const pi = acos(-1);
 const radians = (deg) => Decimal.div(pi, 180).mul(deg);
 const degrees = (rad) => Decimal.div(180, pi).mul(rad);
 
+let latLng = [];
+let blockPosition = [];
+let jochome = [];
+let coordinateSystem = "Sapporo";
+
 let originLat = radians(hgsSet[coordinateSystem].origin[0]);
 let originLat1 = atan(sub(1, e2).mul(tan(originLat)))
 let originLng = radians(hgsSet[coordinateSystem].origin[1]);
 let dec = radians(hgsSet[coordinateSystem].declination)
 
 //wgs84の経緯度をhgsの経緯度に変換
-function wgs2hgs(lat, lng) {
+function wgs2hgs([lat, lng]) {
     const latRad = radians(lat);
     const lngRad = radians(lng);
     //地点(lat, lng)を指すベクトルをHGSに変換: (X, Y, Z)
-    const f = (phi, delta) => {
+    const g = (phi, delta) => {
         const a = sub(1, e2).mul(cos(phi)).mul(cos(delta)).mul(sin(latRad));
         const b = cos(latRad).mul(sin(delta).mul(sin(lngRad.sub(originLng))).add(sin(phi).mul(cos(delta)).mul(cos(lngRad.sub(originLng)))));
         return sub(a, b)
     };
-    const X = f(originLat1.sub(pi.div(2)), 0)
-    const Y = f(originLat1, dec.sub(pi.div(2)))
-    const Z = f(originLat1, dec)
+    const X = g(originLat1.sub(pi.div(2)), 0)
+    const Y = g(originLat1, dec.sub(pi.div(2)))
+    const Z = g(originLat1, dec)
 
     let LAT = degrees(asin(Z.div(sqrt(sin(latRad).pow(2).mul(e2.pow(2).sub(e2.mul(2))).add(1)))));
     let LNG = degrees(atan2(Y, X));
@@ -102,7 +105,7 @@ function wgs2hgs(lat, lng) {
 };
 
 //hgsの経緯度をwgsの経緯度に変換
-function hgs2wgs(LAT, LNG) {
+function hgs2wgs([LAT, LNG]) {
     const LATRad = radians(LAT);
     const LNGRad = radians(LNG);
     //HGS上の地点(LAT, LNG)を指す単位ベクトルをWGSに変換: (nx, ny, nz)
@@ -123,19 +126,19 @@ function hgs2wgs(LAT, LNG) {
     return [lat, lng]
 };
 
-//HGS経緯度から条丁目を算出
-function getBlockPosition(LATLNG) {
-    let latitudinalBlock = Decimal.abs(LATLNG[0]).div(hgsSet[coordinateSystem].blockSizeLatLng[0]).floor();
-    let longitudinalBlock = Decimal.abs(LATLNG[1]).div(hgsSet[coordinateSystem].blockSizeLatLng[1]).floor();
-    latitudinalBlock = Decimal(Math.sign(LATLNG[0])).mul(latitudinalBlock);
-    longitudinalBlock = Decimal(Math.sign(LATLNG[1])).mul(longitudinalBlock);
+//HGS経緯度から区画の位置を算出
+function hgs2blockPosition([LAT, LNG]) {
+    let latitudinalBlock = Decimal.abs(LAT).div(hgsSet[coordinateSystem].blockSizeLatLng[0]).floor().add(1);
+    let longitudinalBlock = Decimal.abs(LNG).div(hgsSet[coordinateSystem].blockSizeLatLng[1]).floor().add(1);
+    latitudinalBlock = Decimal(Math.sign(LAT)).mul(latitudinalBlock);
+    longitudinalBlock = Decimal(Math.sign(LNG)).mul(longitudinalBlock);
     blockPosition = [latitudinalBlock, longitudinalBlock]
     return blockPosition;
 };
 
-//条丁目からHGS経緯度を算出
-function getLatLng(latLngBlock) {
-    const LAT = new Decimal(latLngBlock[0]).sub(1).mul(hgsSet[coordinateSystem].blockSizeLatLng[0]);
-    const LNG = new Decimal(latLngBlock[1]).sub(1).mul(hgsSet[coordinateSystem].blockSizeLatLng[1]);
+//区画の位置からHGS経緯度を算出
+function blockPosition2hgs([latitudinalBlock, longitudinalBlock]) {
+    const LAT = new Decimal(latitudinalBlock).mul(hgsSet[coordinateSystem].blockSizeLatLng[0]);
+    const LNG = new Decimal(longitudinalBlock).mul(hgsSet[coordinateSystem].blockSizeLatLng[1]);
     return [LAT, LNG]
 };
