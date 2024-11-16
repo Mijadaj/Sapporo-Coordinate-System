@@ -30,7 +30,7 @@ li {
 .left {
     width: 50%;
     aspect-ratio: 4 / 3;
-    max-width: 800px;
+    max-width: 600px;
 }
 .right {
     width: 50%;
@@ -67,9 +67,6 @@ button, select {
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
-}
-select {
-    padding-right: 30px;
 }
 button:hover, select:hover {
     background-color: white;
