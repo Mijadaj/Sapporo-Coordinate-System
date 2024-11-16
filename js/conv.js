@@ -2,7 +2,7 @@ const hgsSet = {
     Sapporo: {
         name: "大札幌 座標系",
         format: [["北", "南", "大通"], ["東", "西"]],
-        joOffset: ["latitudinal", 175, 110],
+        joOffset: ["latitudinal", -0.000990033565819702, 0.00157505340016771], //30.8631511197875 m/sec
         origin: [43.061138, 141.357079],
         declination: 10.5842138889,
         blockSizeLatLng: [0.001170046801872075, 0.0011661354271942782],
@@ -11,7 +11,7 @@ const hgsSet = {
     Obihiro: {
         name: "帯広 座標系",
         format: [["西", "東", "大通"], ["南", "北"]],
-        joOffset: ["longitudinal", 69, 69],
+        joOffset: ["longitudinal", -0.000618898932322025, 0.000618898932322025], //30.9689767839087 m/sec
         origin: [42.932044, 143.204010],
         declination: 5.59292777778,
         blockSizeLatLng: [0.001170168504264614, 0.0011660447761194029],
@@ -20,7 +20,7 @@ const hgsSet = {
     Nayoro: {
         name: "名寄 座標系",
         format: [["西", "東", "大通"], ["南", "北"]],
-        joOffset: ["longitudinal", 74, 74],
+        joOffset: ["longitudinal", -0.000663668630632269, 0.000663668630632269], //30.9726188745316 m/sec
         origin: [44.356392, 142.463787],
         declination: 0.0992,
         blockSizeLatLng: [0.001169909916936396, 0.0011659012740710033],
@@ -29,7 +29,7 @@ const hgsSet = {
     Nakashibetsu: {
         name: "中標津 座標系",
         format: [["東", "西", "大通"], ["南", "北"]],
-        joOffset: ["longitudinal", 45.5, 45.5],
+        joOffset: ["longitudinal", -0.000408735777291158, 0.000408735777291158], //30.9219050327609
         origin: [43.548025, 144.973040],
         declination: 42.1626611111,
         blockSizeLatLng: [0.0008177655011993894, 0.0008174683912222061],
@@ -39,6 +39,7 @@ const hgsSet = {
     template: {
         name: " 座標系",
         format: [[, ], [, ]],
+        joOffset: [],
         origin: [, ],
         declination: ,
         blockSizeLatLng: ,
@@ -73,7 +74,7 @@ const pi = acos(-1);
 const radians = (deg) => Decimal.div(pi, 180).mul(deg);
 const degrees = (rad) => Decimal.div(180, pi).mul(rad);
 
-let latLng = [];
+let latLng;
 let blockPosition = [];
 let jochome = [];
 let coordinateSystem = "Sapporo";
@@ -128,17 +129,62 @@ function hgs2wgs([LAT, LNG]) {
 
 //HGS経緯度から区画の位置を算出
 function hgs2blockPosition([LAT, LNG]) {
-    let latitudinalBlock = Decimal.abs(LAT).div(hgsSet[coordinateSystem].blockSizeLatLng[0]).floor().add(1);
-    let longitudinalBlock = Decimal.abs(LNG).div(hgsSet[coordinateSystem].blockSizeLatLng[1]).floor().add(1);
-    latitudinalBlock = Decimal(Math.sign(LAT)).mul(latitudinalBlock);
-    longitudinalBlock = Decimal(Math.sign(LNG)).mul(longitudinalBlock);
-    blockPosition = [latitudinalBlock, longitudinalBlock]
+    const offset = hgsSet[coordinateSystem].joOffset //大通の幅に対する補正
+    const latDegPerBlock = hgsSet[coordinateSystem].blockSizeLatLng[0];
+    const lngDegPerBlock = hgsSet[coordinateSystem].blockSizeLatLng[1];
+    const adjustJo = function(deg, degPerBlock) {
+        let pos;
+        if (deg <= offset[1]) {
+            pos = sub(deg, offset[1]).div(degPerBlock).ceil().sub(1);
+            return pos;
+        } else if (offset[2] <= deg) {
+            pos = sub(deg, offset[2]).div(degPerBlock).floor().add(1);
+            return pos;
+        } else {
+            return 0;
+        }
+    };
+    let latitudinalBlock, longitudinalBlock;
+    if (offset[0] == "latitudinal") {
+        latitudinalBlock = adjustJo(LAT, latDegPerBlock);
+        longitudinalBlock = Decimal.abs(LNG).div(lngDegPerBlock).floor().add(1);
+        longitudinalBlock = Decimal(Math.sign(LNG)).mul(longitudinalBlock);
+    } else {
+        latitudinalBlock = Decimal.abs(LAT).div(latDegPerBlock).floor().add(1);
+        latitudinalBlock = Decimal(Math.sign(LAT)).mul(latitudinalBlock);
+        longitudinalBlock = adjustJo(LNG, lngDegPerBlock);
+    };
+    blockPosition = [latitudinalBlock, longitudinalBlock];
     return blockPosition;
 };
 
 //区画の位置からHGS経緯度を算出
 function blockPosition2hgs([latitudinalBlock, longitudinalBlock]) {
-    const LAT = new Decimal(latitudinalBlock).mul(hgsSet[coordinateSystem].blockSizeLatLng[0]);
-    const LNG = new Decimal(longitudinalBlock).mul(hgsSet[coordinateSystem].blockSizeLatLng[1]);
+    const offset = hgsSet[coordinateSystem].joOffset; //大通の幅に対する補正
+    const latDegPerBlock = hgsSet[coordinateSystem].blockSizeLatLng[0];
+    const lngDegPerBlock = hgsSet[coordinateSystem].blockSizeLatLng[1];
+    const restoreDeg = function(jo, degPerBlock) {
+        let deg;
+        switch (Math.sign(jo)) {
+            case 1:
+                deg = sub(jo, 1).mul(degPerBlock).add(offset[2])
+                break
+            case -1:
+                deg = sub(jo, -1).mul(degPerBlock).add(offset[1])
+                break
+            case 0:
+                deg = 0
+                break
+        }
+        return deg;
+    };
+    let LAT, LNG;
+    if (offset[0] == "latitudinal") {
+        LAT = restoreDeg(latitudinalBlock, latDegPerBlock);
+        LNG = Decimal(longitudinalBlock).mul(lngDegPerBlock);
+    } else {
+        LAT = Decimal(latitudinalBlock).mul(latDegPerBlock);
+        LNG = restoreDeg(longitudinalBlock, lngDegPerBlock);
+    };
     return [LAT, LNG]
 };

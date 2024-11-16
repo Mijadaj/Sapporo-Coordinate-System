@@ -25,14 +25,14 @@
         <option id="initialOption" value="">--座標系を変更--</option>
     </select>
     <button class="head" onclick="window.open('./conv.html')">計算式</button>
-    <p>大通を赤道、創成川（南6条～北11条間, 真北に対して西に10.6度の傾き）を本初子午線とする座標系をもとに地球上のあらゆる地点を札幌の住所表示に変換します。</p>
+    <p>大通を赤道，創成川（南6条～北11条間, 真北に対して西に10.6度の傾き）を本初子午線とする座標系をもとに地球上のあらゆる地点を札幌の住所表示に変換します．</p>
     <div class="container">
         <div class="left" id="map"></div>
         <div class="right">
             <table id="converter">
                 <caption>座標変換</caption>
                 <tr>
-                    <th>緯度, 経度（10進法）</th>
+                    <th>緯度, 経度 (10進法)</th>
                     <td><input type="text" id="latLng" placeholder="緯度, 経度"></td>
                 </tr>
             </tr>
@@ -40,18 +40,18 @@
             <td>
                 <div id="jochome">
                     <select class="jochome" id="selectJo"></select>
-                    <input type="text" class="jochome" id="joNumber"><span id="jo">条</span>
+                    <input type="number" class="jochome" id="joNumber"><span id="jo">条</span>
                     <select class="jochome" id="selectChome"></select>
-                    <input type="text" class="jochome" id="chomeNumber"><span>丁目</span>
+                    <input type="number" class="jochome" id="chomeNumber"><span>丁目</span>
                 </div>
             </td>
             <tr>
             </table>
             <ul id="description">
-                <li>地図上のピンを動かすとその位置の経緯度、および選択した座標系における条丁目が表示されます。ピン、経緯度、条丁目は連動しています。</li>
-                <li>赤い点は選択した座標系の原点です。</li>
-                <li>ピンの初期位置は各座標系のもととなった自治体の姉妹都市に設定してあります。</li>
-                <li>この座標変換における条丁目は楕円体座標に基づいています。平面直角座標ではありません。したがって南北方向の条（丁目）の数が大きくなるほど、東西方向の丁目（条）の間隔は狭くなります。札幌座標系の場合、北76919条（アイルランド沖 南西約1300kmの海域）付近ですべての丁目が1点に集まります。</li>
+                <li>地図上のピンを動かすとその位置の経緯度，および選択した座標系における条丁目が表示されます．ピン，経緯度，条丁目は連動しています．</li>
+                <li>赤い点は選択した座標系の原点です．</li>
+                <li>ピンの初期位置は各座標系のもととなった自治体の姉妹都市に設定してあります．</li>
+                <li>この座標変換における条丁目は楕円体座標に基づいています．平面直角座標ではありません．したがって南北方向の条（丁目）の数が大きくなるほど，東西方向の丁目（条）の間隔は狭くなります．札幌座標系の場合，北76919条（アイルランド沖 南西約1300kmの海域）付近ですべての丁目が1点に集まります．</li>
             </ul>
         </div>
     </div>
